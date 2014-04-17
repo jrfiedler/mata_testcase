@@ -27,8 +27,8 @@
 {p 4 4 4}
 {cmd:testcase} is a Mata class for testing Mata code. The class provides an
 "xUnit" type of testing framework (see Wikipedia "xUnit" article). To create
-tests, a subclass of {cmd:testcase} is made and test functions are defined
-within the subclass. Users who are new to Mata class programming should 
+tests, create a subclass of {cmd:testcase} and write test functions
+within that subclass. Users who are new to Mata class programming should 
 probably read {help m2_class}.
 
 
@@ -66,8 +66,8 @@ For a test class called (for example) "mytestclass" and a test instance called
 {title:Example}
 
 {p 4 4 4}
-Suppose you've made a function that tries to add any two inputs and return their
-sum.
+Suppose you've made a function that tries to return the sum of any two inputs
+it receives.
 
         function add(a, b)
         {
@@ -289,23 +289,24 @@ must occur the same number of times. For example, with {it:samecount} zero,
 
 {p 12 12 8}
 are judged to have the same contents. The default value for {it:samecount} is 1, 
-i.e., each element must occur the same number of times.
-This function records an "error" if {it:a} or {it:b} is (a matrix of) struct or
-class. It records a "fail" if {it:a} and {it:b} do not have the same contents
-(as described above). It records a "pass" otherwise.
+i.e., each element must occur the same number of times. {cmd:assert_same_contents()} 
+records an "error" if {it:a} or {it:b} is (a matrix of) {it:struct} or {it:class} 
+(an {it:asarray} is used to count contents, and {it:asarray}'s cannot have 
+{it:struct} or {it:class} keys). It records a "fail" if {it:a} and {it:b} do not 
+have the same contents (as described above). It records a "pass" otherwise.
 
 {p 8 12 8}
 {cmd:assert_close()} is used to test that its first two inputs {it:a}, {it:b} 
-are nearly the same, element by element. More specifically it checks that
+are nearly the same, element by element. More specifically, it checks that
 
                 mreldif(a, b) < tolerance
 
 {p 12 12 8}
 where {it:tolerance} is the third, optional input (default value is 1e-12). 
-It records an "error" if either {it:a} or {it:b} is not numeric, or if the 
-{it:tolerance} (if specified) is not a real scalar. It records a "fail" if any 
-of the corresponding elements are not close or {it:a} and {it:b} have different 
-dimensions. It records a "pass" otherwise.
+{cmd:assert_close()} records an "error" if either {it:a} or {it:b} is not numeric, 
+or if the {it:tolerance} (if specified) is not a real scalar. It records a "fail" 
+if any of the corresponding elements are not close or {it:a} and {it:b} have 
+different dimensions. It records a "pass" otherwise.
 
 {p 8 12 8}
 {cmd:assert_all()} is used to test that all elements of a matrix evaluate to
@@ -322,7 +323,7 @@ real, a "fail" if all of the input's elements are zero, or a "pass" otherwise.
 expected to. The first input should be the intended error code (or zero for "no
 error") or a missing value. If the first input is a missing value, the test 
 passes when the function raises any (non-zero) error. {cmd:assert_error()} 
-records an "error" if any of the inputs is misspecified, a "fail" if the 
+records an "error" if any of the inputs is miss-specified, a "fail" if the 
 function does not raise the intended error, or a "pass" otherwise.
 
 {p 8 12 8}
@@ -330,7 +331,7 @@ function does not raise the intended error, or a "pass" otherwise.
 an error when expected to. The first input should be the intended error code 
 (or zero for "no error") or a missing value. If the first input is a missing 
 value, the test passes when the function raises any (non-zero) error. It records 
-an "error" if any of the inputs is misspecified, a "fail" if the function does 
+an "error" if any of the inputs is miss-specified, a "fail" if the function does 
 not raise the intended error, or a "pass" otherwise.
 
 
@@ -385,7 +386,7 @@ desired to occur just once, before any test function in your
 before the first test function is called (and before the first {cmd:setup()}).
 
 {p 8 12 8}
-{cmd:teardown()} is used for any kind of post-test activity that is desired
+{cmd:teardown()} is used for any kind of activity that is desired
 to occur after each test function in your 
 {cmd:testcase} subclass is called. {cmd:teardown()} is automatically called after
 each test function.
@@ -397,7 +398,7 @@ desired to occur just once, after all of the test functions in your
 called after the last test function is called (and after the last {cmd:teardown()}).
 
 {p 8 12 8}
-{cmd:new()}, as in any Mata class, is used during class creation. 
+{cmd:new()}, as with any Mata class, is used during class creation. 
 Use this function for any kind of preparation or customization that you 
 wish to occur when your {cmd:testcase} subclass is created.
 
@@ -416,7 +417,7 @@ wish to occur when your {cmd:testcase} subclass is created.
 
 {p 8 12 8}
 {cmd:name} should be equal to the name of the class {it:instance}, as in the
-{help testcase##example:example} above. This must be supplied for each 
+{help testcase##example:example} above. {cmd:name} must be supplied for each 
 class instance.
 
 {p 8 12 8}
@@ -424,7 +425,7 @@ class instance.
 functions that serve as tests, as in the {help testcase##example:example} 
 above. You may define other class functions if desired and not include them, 
 but the class will only know to run the tests in {cmd:test_names}. 
-This must be supplied for each class instance.
+{cmd:test_names} must be supplied for each class instance.
 
 
     {title:Optional}
@@ -565,6 +566,14 @@ above. To prevent collision with existing functions and variables, avoid names
 beginning with double underscore. Alternately, if wanting to use a name that
 begins with double underscore, verify that the name is not in use by checking
 the class declaration in testcase.mata.
+
+
+{marker source}{...}
+{title:Source code}
+
+{p 4 4 2}
+{view testcase.mata, adopath asis:testcase.mata}
+{p_end}
 
 
 {title:Author}
