@@ -231,7 +231,7 @@ variable (see {help testcase##example:example} above or
 {it:void} {cmd:assert_unequal(}{it:transmorphic} {it:a}, {it:transmorphic} {it:b}{cmd:)}
 
 {p 8 8 2}
-{it:void} {cmd:assert_same_contents(}{it:transmorphic} {it:a}, {it:transmorphic} {it:b} [, {it:real scalar} {it:samecount}]{cmd:)}
+{it:void} {cmd:assert_equal_contents(}{it:transmorphic} {it:a}, {it:transmorphic} {it:b} [, {it:real scalar} {it:samecount}]{cmd:)}
 
 {p 8 8 2}
 {it:void} {cmd:assert_close(}{it:numeric} {it:a}, {it:numeric} {it:b} [, {it:real scalar} {it:tolerance}]{cmd:)}
@@ -274,8 +274,8 @@ a "pass" if the inputs are equal or a "fail" otherwise.
 records a "pass" if the inputs are not equal or a "fail" otherwise.
 
 {p 8 12 8}
-{cmd:assert_same_contents()} is used to test that two matrices (or scalars) 
-{it:a} and {it:b} have the same contents, regardless of how they are arranged. 
+{cmd:assert_equal_contents()} is used to test that two matrices (or scalars) 
+{it:a} and {it:b} have the same (equal) contents, regardless of how they are arranged. 
 For example, the matrices 
 
                 (9, 10, 11),  (10, 11, 9),  and  (11 \ 10 \ 9)
@@ -289,10 +289,9 @@ must occur the same number of times. For example, with {it:samecount} zero,
 
 {p 12 12 8}
 are judged to have the same contents. The default value for {it:samecount} is 1, 
-i.e., each element must occur the same number of times. {cmd:assert_same_contents()} 
-records an "error" if {it:a} or {it:b} is (a matrix of) {it:struct} or {it:class} 
-(an {it:asarray} is used to count contents, and {it:asarray}'s cannot have 
-{it:struct} or {it:class} keys). It records a "fail" if {it:a} and {it:b} do not 
+i.e., each element must occur the same number of times. {cmd:assert_equal_contents()} 
+records an "error" if {it:a} or {it:b} is (a matrix of) {it:class} (classes instances 
+are difficult to compare). It records a "fail" if {it:a} and {it:b} do not 
 have the same contents (as described above). It records a "pass" otherwise.
 
 {p 8 12 8}

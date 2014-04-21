@@ -23,18 +23,25 @@ mata
 		
 		// user *must not* redefine any of the following
 		final void run()
-		final void assert()
-		final void assert_equal(), assert_unequal()
-		final void assert_same_contents(), assert_close()
-		final void assert_all(), assert_any()
-		final void assert_error(), assert_method_error()
 		final void print_summary()
+		final void assert()
+		final void assert_equal()
+		final void assert_unequal()
+		final void assert_equal_contents()
+		final void assert_close()
+		final void assert_all()
+		final void assert_any()
+		final void assert_error()
+		final void assert_method_error()
 		
-		final real scalar __capture(), __method_capture()
+		final real scalar __capture()
+		final real scalar __method_capture()
 		final real scalar __run_method()
+		final void __equal_struct_contents()
+		final void __contents_failures()
+		
 		final real matrix __pass_fail_error
 		final real scalar __testnum
-		
 		final real scalar __subtestnum
 		final real scalar __subtestcomplete
 		final pointer(pointer(string) vector) colvector __msgs
@@ -108,7 +115,16 @@ mata
 			rc = this.__run_method(this.test_names[i])
 			if (rc) {
 				this.__pass_fail_error[i, 3] = this.__pass_fail_error[i, 3] + 1
-				if (this.__subtestcomplete) {
+				if (this.__subtestnum == 0) {
+					this.__msgs[i] = &(
+						*this.__msgs[i] \ 
+						&sprintf(
+							"** unexpected error %f before first subtest **",
+							rc
+						)
+					)
+				}
+				else if (this.__subtestcomplete) {
 					this.__msgs[i] = &(
 						*this.__msgs[i] \ 
 						&sprintf(
@@ -560,7 +576,139 @@ mata
 		this.__subtestcomplete = 1
 	}
 	
-	void testcase::assert_same_contents(
+	void testcase::__contents_failures(
+		string scalar which, | string scalar type1, string scalar type2
+	)
+	{
+		real scalar n
+		
+		n = this.__testnum
+		this.__pass_fail_error[n, 2] = this.__pass_fail_error[n, 2] + 1
+		if (which == "difftypes") {
+			this.__msgs[n] = &(
+				*this.__msgs[n] \
+				(
+					&sprintf(
+						"subtest %f: assert_equal_contents()",
+						this.__subtestnum
+					) \
+					&"    contents are incomparable" \
+					&(
+						"    > element types differ: " +
+						sprintf("%s vs %s", type1, type2)
+					)
+				)
+			)
+		}
+		else if (which == "diffnum") {
+			this.__msgs[n] = &(
+				*this.__msgs[n] \
+				(
+					&sprintf(
+						"subtest %f: assert_equal_contents()",
+						this.__subtestnum
+					) \
+					&"    inputs have different numbers of distinct elements"
+				)
+			)
+		}
+		else if (which == "diffels") {
+			this.__msgs[n] = &(
+				*this.__msgs[n] \
+				(
+					&sprintf(
+						"subtest %f: assert_equal_contents()",
+						this.__subtestnum
+					) \
+					&"    inputs have elements not in common"
+				)
+			)
+		}
+		else if (which == "diffcounts") {
+			this.__msgs[n] = &(
+				*this.__msgs[n] \
+				(
+					&sprintf(
+						"subtest %f: assert_equal_contents()",
+						this.__subtestnum
+					) \
+					&"    counts differ"
+				)
+			)
+		}
+		else {
+			this.__msgs[n] = &(
+				*this.__msgs[n] \
+				(
+					&sprintf(
+						"subtest %f: assert_equal_contents()",
+						this.__subtestnum
+					) \
+					&("    unknown reason: " + which)
+				)
+			)
+		}
+	}
+	
+	void testcase::__equal_struct_contents(
+		transmorphic a, transmorphic b, real scalar samecount
+	)
+	{
+		transmorphic items, item
+		real matrix counts
+		real scalar nitems, i, j, k, found
+		
+		counts = J(1,2,0)
+		
+		items = a[1,1]
+		nitems = 1
+		
+		for (i = 1; i <= rows(a); i++) {
+			for (j = 1; j <= cols(a); j++) {
+				item = a[i,j]
+				found = 0
+				for (k = 1; k <= nitems; k++) {
+					if (item == items[k]) {
+						found = 1
+						counts[k,1] = counts[k,1] + 1
+					}
+				}
+				if (!found) {
+					items = items \ item
+					counts = counts \ (1, 0)
+					nitems = nitems + 1
+				}
+			}
+		}
+		
+		for (i = 1; i <= rows(b); i++) {
+			for (j = 1; j <= cols(b); j++) {
+				item = b[i,j]
+				found = 0
+				for (k = 1; k <= nitems; k++) {
+					if (item == items[k]) {
+						found = 1
+						counts[k,2] = counts[k,2] + 1
+						if (samecount & counts[k,2] > counts[k,1]) {
+							this.__contents_failures("diffcounts")
+							return
+						}
+					}
+				}
+				if (!found) {
+					this.__contents_failures("diffels")
+					return
+				}
+			}
+		}
+		
+		if (samecount & counts[.,1] != counts[.,2]) {
+			this.__contents_failures("diffcounts")
+			return
+		}
+	}
+	
+	void testcase::assert_equal_contents(
 		transmorphic a, transmorphic b, | real scalar samecount
 	)
 	{
@@ -583,7 +731,7 @@ mata
 				*this.__msgs[n] \
 				(
 					&sprintf(
-						"subtest %f: assert_same_contents()", this.__subtestnum
+						"subtest %f: assert_equal_contents()", this.__subtestnum
 					) \
 					&"    counts differ; (rows(a) * cols(a)) != (rows(b) * cols(b))"
 				)
@@ -594,15 +742,14 @@ mata
 		
 		atype = eltype(a)
 		btype = eltype(b)
-		if (atype == "struct" | atype == "class" | 
-				btype == "struct" | btype == "class") {
+		if (atype == "class" | btype == "class") {
 			this.__pass_fail_error[n, 3] = this.__pass_fail_error[n, 3] + 1
 			
 			this.__msgs[n] = &(
 				*this.__msgs[n] \
 				(
 					&sprintf(
-						"subtest %f: assert_same_contents()", this.__subtestnum
+						"subtest %f: assert_equal_contents()", this.__subtestnum
 					) \
 					&"    error: structs and classes not allowed"
 				)
@@ -611,47 +758,28 @@ mata
 			return
 		}
 		
+		if (atype == "struct" | btype == "struct") {
+			if (atype != btype) {
+				this.__contents_failures("difftypes", atype, btype)
+			}
+			else {
+				this.__equal_struct_contents(a, b, samecount)
+			}
+			this.__subtestcomplete = 1
+			return
+		}
+		
 		if (atype != btype) {
 			if (atype == "string" | btype == "string" | 
 					atype == "pointer" | btype == "pointer") {
-				this.__pass_fail_error[n, 2] = this.__pass_fail_error[n, 2] + 1
-				
-				this.__msgs[n] = &(
-					*this.__msgs[n] \
-					(
-						&sprintf(
-							"subtest %f: assert_same_contents()",
-							this.__subtestnum
-						) \
-						&"    contents are incomparable" \
-						&(
-							"    > element types differ: " +
-							sprintf("%s vs %s", atype, btype)
-						)
-					)
-				)
+				this.__contents_failures("difftypes", atype, btype)
 				this.__subtestcomplete = 1
 				return
 			}
 			
 			// else one of a,b is real and the other is complex
 			if (!isrealvalues(a) | !isrealvalues(b)) {
-				this.__pass_fail_error[n, 2] = this.__pass_fail_error[n, 2] + 1
-				
-				this.__msgs[n] = &(
-					*this.__msgs[n] \
-					(
-						&sprintf(
-							"subtest %f: assert_same_contents()",
-							this.__subtestnum
-						) \
-						&"    contents are incomparable" \
-						&(
-							"    > element types differ: " +
-							sprintf("%s vs %s", atype, btype)
-						)
-					)
-				)
+				this.__contents_failures("difftypes", atype, btype)
 				this.__subtestcomplete = 1
 				return
 			}
@@ -685,18 +813,7 @@ mata
 		}
 		
 		if (length(asarray_keys(acounter)) != length(asarray_keys(bcounter))) {
-			this.__pass_fail_error[n, 2] = this.__pass_fail_error[n, 2] + 1
-			
-			this.__msgs[n] = &(
-				*this.__msgs[n] \
-				(
-					&sprintf(
-						"subtest %f: assert_same_contents()",
-						this.__subtestnum
-					) \
-					&"    inputs have different numbers of distinct elements"
-				)
-			)
+			this.__contents_failures("diffnum")
 			this.__subtestcomplete = 1
 			return
 		}
@@ -706,31 +823,11 @@ mata
 			while (loc != NULL) {
 				key = asarray_key(acounter, loc)
 				if (asarray(acounter, key) != asarray(bcounter, key)) {
-					this.__pass_fail_error[n, 2] = this.__pass_fail_error[n, 2] + 1
-					
 					if (asarray(bcounter, key) == 0) {
-						this.__msgs[n] = &(
-							*this.__msgs[n] \
-							(
-								&sprintf(
-									"subtest %f: assert_same_contents()",
-									this.__subtestnum
-								) \
-								&"    inputs have elements not in common"
-							)
-						)
+						this.__contents_failures("diffels")
 					}
 					else {
-						this.__msgs[n] = &(
-							*this.__msgs[n] \
-							(
-								&sprintf(
-									"subtest %f: assert_same_contents()",
-									this.__subtestnum
-								) \
-								&"    counts differ"
-							)
-						)
+						this.__contents_failures("diffcounts")
 					}
 					this.__subtestcomplete = 1
 					return
@@ -742,18 +839,7 @@ mata
 			while (loc != NULL) {
 				key = asarray_key(acounter, loc)
 				if (asarray(bcounter, key) == 0) {
-					this.__pass_fail_error[n, 2] = this.__pass_fail_error[n, 2] + 1
-					
-					this.__msgs[n] = &(
-						*this.__msgs[n] \
-						(
-							&sprintf(
-								"subtest %f: assert_same_contents()",
-								this.__subtestnum
-							) \
-							&"    inputs have elements not in common"
-						)
-					)
+					this.__contents_failures("diffels")
 					this.__subtestcomplete = 1
 					return
 				}

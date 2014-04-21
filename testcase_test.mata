@@ -51,7 +51,7 @@ mata
 		void test_assert_unequal()
 		void test_assert_all()
 		void test_assert_any()
-		void test_assert_same_contents()
+		void test_assert_equal_contents()
 		void test_assert_close()
 		void intentional_errors()
 		void intentional_failures()
@@ -400,9 +400,9 @@ mata
 		}
 	}
 	
-	void meta_test::test_assert_same_contents()
+	void meta_test::test_assert_equal_contents()
 	{
-		transmorphic a, b
+		transmorphic a, b, A, B
 		string scalar astr, bstr
 		real scalar testnum
 		
@@ -410,8 +410,8 @@ mata
 		
 		// assert_close() takes two or three arguments and 
 		// all args must be numeric
-		this.assert_method_error(3001, "meta", "assert_same_contents", (&3))
-		this.assert_method_error(3001, "meta", "assert_same_contents", (&3, &4, &1, &2))
+		this.assert_method_error(3001, "meta", "assert_equal_contents", (&3))
+		this.assert_method_error(3001, "meta", "assert_equal_contents", (&3, &4, &1, &2))
 		
 		// check that assert_close() passes when it should 
 		// and fails when it should
@@ -421,34 +421,56 @@ mata
 		// real
 		a = (1, 1e-6 \ -1e-6, -10)
 		b = (-10, 1, 1e-6, -1e-6)
-		this.assert_same_contents(a, b)
+		this.assert_equal_contents(a, b)
 		
 		// string
 		a = ("a", "b" \ "c", "d" \ "a", "d")
 		b = ("c", "d", "d", "a", "a", "b")
-		this.assert_same_contents(a, b)
-		this.assert_same_contents(a, ("a" \ "b" \ "c" \ "d" \ "a" \ "d"))
-		this.assert_same_contents(a, ("a", "b", "c", "d"), 0)
-		this.assert_same_contents(a, ("a" \ "b" \ "c" \ "d"), 0)
+		this.assert_equal_contents(a, b)
+		this.assert_equal_contents(a, ("a" \ "b" \ "c" \ "d" \ "a" \ "d"))
+		this.assert_equal_contents(a, ("a", "b", "c", "d"), 0)
+		this.assert_equal_contents(a, ("a" \ "b" \ "c" \ "d"), 0)
 		
 		// real and "complex" real
 		a = (0, 1 \ 2, 3 \ 1, 1)
 		b = (2 + 0i, 1 + 0i, 3 + 0i, 0, 1, 1 + 0i)
-		this.assert_same_contents(a, b)
-		this.assert_same_contents(a, (0 + 0i, 1 + 0i, 2 + 0i, 3 + 0i), 0)
+		this.assert_equal_contents(a, b)
+		this.assert_equal_contents(a, (0 + 0i, 1 + 0i, 2 + 0i, 3 + 0i), 0)
 		
 		// complex
 		a = (0, 1 + 12i \ 0.2 + 3.5i, 3 \ 1, 1)
 		b = (0.2 + 3.5i, 1 + 0i, 3 + 0i, 0, 1, 1 + 12i)
-		this.assert_same_contents(a, b)
+		this.assert_equal_contents(a, b)
 		
 		// pointer
 		astr = "a"
 		bstr = "b"
 		a = (&astr, &bstr \ &astr, &bstr)
 		b = (&astr, &astr, &bstr, &bstr)
-		this.assert_same_contents(a, b)
-		this.assert_same_contents(a, (&bstr, &astr), 0)
+		this.assert_equal_contents(a, b)
+		this.assert_equal_contents(a, (&bstr, &astr), 0)
+
+		// struct
+		
+		A = (asarray_create(), asarray_create() \ asarray_create(), asarray_create())
+		B = (asarray_create(), asarray_create(), asarray_create(), asarray_create())
+		
+		this.assert_equal_contents(A[1,1], B[1])
+		this.assert_equal_contents(A, B)
+		
+		asarray(A[2,1], "a", 1)
+		asarray(A[2,1], "b", 2)
+		
+		asarray(B[3], "a", 10)
+		asarray(B[3], "b", 20)
+		
+		A[2,1] = B[3]
+		
+		this.assert_equal_contents(A, B)
+		
+		B = (B , asarray_create())
+		
+		this.assert_equal_contents(A, B, 0)
 		
 		
 		// fail
@@ -577,18 +599,18 @@ mata
 		this.assert_close(3, 3, 1i * 1e-12)
 		this.assert_close(3, 3, (1e-12, 1e-12))
 		
-		this.assert_same_contents(10, asarray_create())
-		this.assert_same_contents(asarray_create(), 10)
-		this.assert_same_contents(10, testcase())
-		this.assert_same_contents(testcase(), 10)
+		this.assert_equal_contents(10, testcase())
+		this.assert_equal_contents(testcase(), 10)
 		
 		// make sure everything above leads to error
-		assert(this.__pass_fail_error[this.__testnum, 1..3] == (0, 0, 32))
+		::assert(this.__pass_fail_error[this.__testnum, 1..3] == (0, 0, 30))
 	}
 	
 	void meta_test::intentional_failures()
 	{
 		real matrix a, b
+		transmorphic A, B
+		
 	
 		this.assert_error(0, &noisy_sqrt(), &"blah")
 		
@@ -610,18 +632,43 @@ mata
 		this.assert_close(a, b)
 		this.assert_close(a, (1, 1e-6))
 		
-		this.assert_same_contents((9, 10), (10, 11))
-		this.assert_same_contents((9, 10), (9, 10, 11))
-		this.assert_same_contents((9, 10, 11), (9, 10))
-		this.assert_same_contents((9, 11), (9, 10))
-		this.assert_same_contents((9, 10), (9, 10, 11), 0)
-		this.assert_same_contents((9, 10), (9, 10, 10))
-		this.assert_same_contents((9, 9, 10), (9, 10, 10))
-		this.assert_same_contents((9, 10), (9, 10 + 1i))
-		this.assert_same_contents((9, 10), (&9, &10))
+		this.assert_equal_contents((9, 10), (10, 11))
+		this.assert_equal_contents((9, 10), (9, 10, 11))
+		this.assert_equal_contents((9, 10, 11), (9, 10))
+		this.assert_equal_contents((9, 11), (9, 10))
+		this.assert_equal_contents((9, 10), (9, 10, 11), 0)
+		this.assert_equal_contents((9, 10), (9, 10, 10))
+		this.assert_equal_contents((9, 9, 10), (9, 10, 10))
+		this.assert_equal_contents((9, 10), (9, 10 + 1i))
+		this.assert_equal_contents((9, 10), (&9, &10))
+		this.assert_equal_contents(10, asarray_create())
+		this.assert_equal_contents(asarray_create(), 10)
+		
+		A = (asarray_create(), asarray_create() \ asarray_create(), asarray_create())
+		B = (asarray_create(), asarray_create(), asarray_create(), asarray_create())
+		
+		asarray(A[2,1], "a", 1)
+		asarray(A[2,1], "b", 2)
+		
+		asarray(B[3], "a", 10)
+		asarray(B[3], "b", 20)
+		
+		this.assert_equal_contents(A, B)
+		
+		A[2,1] = B[3]
+		
+		B = (B , asarray_create())
+		
+		this.assert_equal_contents(A, B)
+		
+		// try to get failure in different part of code
+		B = (asarray_create(), asarray_create(), asarray_create(), B)
+		
+		this.assert_equal_contents(A, B)
 		
 		// make sure everything above leads to failure
-		assert(this.__pass_fail_error[this.__testnum, 1..3] == (0, 20, 0))
+		this.__pass_fail_error[this.__testnum, 1..3]
+		::assert(this.__pass_fail_error[this.__testnum, 1..3] == (0, 25, 0))
 	}
 	
 	void meta_test::setup_teardown_counts()
@@ -655,7 +702,7 @@ mata
 		"test_assert_unequal",
 		"test_assert_all",
 		"test_assert_any",
-		"test_assert_same_contents",
+		"test_assert_equal_contents",
 		"test_assert_close",
 		"intentional_errors",
 		"intentional_failures",
@@ -712,6 +759,6 @@ mata
 	
 	// clean up
 	mata drop noisy_sqrt()
-	mata drop meta
-	mata drop meta_test()
+	//mata drop meta
+	//mata drop meta_test()
 end

@@ -50,11 +50,11 @@ Assert functions
 
     * `assert_unequal()` is used to test that its two inputs are not equal. It records a "pass" if the inputs are not equal or a "fail" otherwise.
 
-- _void_ **assert_same_contents**(_transmorphic a_, _transmorphic b_ [, _real scalar samecount_])
+- _void_ **assert_equal_contents**(_transmorphic a_, _transmorphic b_ [, _real scalar samecount_])
 
-    * `assert_same_contents()` is used to test that two matrices (or scalars) `a` and `b` have the same contents, regardless of how they are arranged.  For example, the matrices `(9, 10, 11)`, `(10, 11, 9)`,  and `(11 \ 10 \ 9)` all have the same contents. 
+    * `assert_equal_contents()` is used to test that two matrices (or scalars) `a` and `b` have the same contents, regardless of how they are arranged.  For example, the matrices `(9, 10, 11)`, `(10, 11, 9)`,  and `(11 \ 10 \ 9)` all have the same contents. 
     * The optional input `samecount` determines whether the same elements must occur the same number of times. For example, with `samecount = 0`, `(9, 10, 11)`  and  `(9, 9, 10 \ 11, 11, 11)` are judged to have the same contents. The default value for `samecount` is 1, i.e., each element must occur the same number of times. 
-    * `assert_same_contents()` records an "error" if `a` or `b` is (a matrix of) `struct` or `class` (an `asarray` is used to count contents, and `asarray`'s cannot have `struct` or `class` keys). It records a "fail" if `a` and `b` do not have the same contents. It records a "pass" otherwise.
+    * `assert_equal_contents()` records an "error" if `a` or `b` is (a matrix of) `class` (classes instances are difficult to compare). It records a "fail" if `a` and `b` do not have the same contents. It records a "pass" otherwise.
 
 - _void_ **assert_close**(_numeric a_, _numeric b_ [, _real scalar tolerance_])
 
