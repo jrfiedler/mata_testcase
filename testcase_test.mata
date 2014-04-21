@@ -667,7 +667,6 @@ mata
 		this.assert_equal_contents(A, B)
 		
 		// make sure everything above leads to failure
-		this.__pass_fail_error[this.__testnum, 1..3]
 		::assert(this.__pass_fail_error[this.__testnum, 1..3] == (0, 25, 0))
 	}
 	
