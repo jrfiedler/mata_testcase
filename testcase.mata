@@ -751,7 +751,7 @@ mata
 					&sprintf(
 						"subtest %f: assert_equal_contents()", this.__subtestnum
 					) \
-					&"    error: structs and classes not allowed"
+					&"    error: classes not allowed"
 				)
 			)
 			this.__subtestcomplete = 1
