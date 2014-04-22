@@ -1,5 +1,3 @@
-// run testcase_test.mata
-
 // testcase() needs to be defined before running this,
 // with, possibly, -run testcase.mata-
 
@@ -758,6 +756,6 @@ mata
 	
 	// clean up
 	mata drop noisy_sqrt()
-	//mata drop meta
-	//mata drop meta_test()
+	mata drop meta
+	mata drop meta_test()
 end
